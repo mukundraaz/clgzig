@@ -14,7 +14,6 @@ and limitations under the License.
 ***************************************************************************** */
 
 
-/// <reference lib="es5" />
-/// <reference lib="dom" />
-/// <reference lib="webworker.importscripts" />
-/// <reference lib="scripthost" />
+/// <reference lib="es2015" />
+/// <reference lib="es2016.array.include" />
+/// <reference lib="es2016.intl" />

@@ -14,7 +14,5 @@ and limitations under the License.
 ***************************************************************************** */
 
 
-/// <reference lib="es5" />
-/// <reference lib="dom" />
-/// <reference lib="webworker.importscripts" />
-/// <reference lib="scripthost" />
+// This file's contents are now included in the main types file.
+// The file has been left for backward compatibility.

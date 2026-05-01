@@ -1,4 +1,148 @@
-import { a as RolldownLog, i as RolldownError, n as LogLevelOption, o as RolldownLogWithString, r as LogOrStringHandler, t as LogLevel } from "./shared/logging-C6h4g8dA.mjs";
-import { z as PreRenderedChunk } from "./shared/binding-zH1vcmbM.mjs";
-import { $ as GeneralHookFilter, A as SourceDescription, At as CodeSplittingOptions, B as TreeshakingOptions, Bt as PartialNull, C as PartialResolvedId, Ct as AddonFunction, D as ResolvedId, Dt as ChunkingContext, E as ResolveIdResult, Et as ChunkFileNamesFunction, F as VERSION, Ft as MinifyOptions, G as EmittedPrebuiltChunk, Gt as RenderedModule, H as EmittedAsset, Ht as OutputAsset, I as BundleError, It as ModuleFormat, J as PluginContextResolveOptions, K as GetModuleInfo, Kt as RolldownOutput, L as ExistingRawSourceMap, Lt as OutputOptions, Mt as GeneratedCodeOptions, Nt as GeneratedCodePreset, O as RolldownPlugin, Ot as CodeSplittingGroup, P as RUNTIME_MODULE_ID, Pt as GlobalsFunction, Q as PluginContextMeta, R as SourceMapInput, Rt as PreRenderedAsset, S as ParallelPluginHooks, St as build, T as ResolveIdExtraOptions, Tt as AdvancedChunksOptions, U as EmittedChunk, Ut as OutputChunk, V as TransformPluginContext, W as EmittedFile, Wt as RenderedChunk, Xt as SourcemapIgnoreListOption, Y as DefineParallelPluginResult, Yt as ModuleInfo, Z as MinimalPluginContext, _ as ImportKind, _t as RolldownWatcherWatcherEventMap, a as ExternalOption, at as RolldownFsModule, b as ModuleType, bt as RolldownBuild, c as InputOptions, ct as NormalizedInputOptions, d as WatcherFileWatcherOptions, dt as LoggingFunction, et as HookFilter, f as WatcherOptions, ft as WarningHandlerWithDefault, g as HookFilterExtension, gt as RolldownWatcherEvent, h as FunctionPluginHooks, ht as RolldownWatcher, i as RolldownOptions, it as RolldownFileStats, j as TransformResult, jt as CommentsOptions, k as RolldownPluginOption, kt as CodeSplittingNameFunction, l as ModuleTypes, lt as TransformOptions, m as CustomPluginOptions, mt as watch, n as RolldownOptionsFunction, nt as BufferEncoding, o as ExternalOptionFunction, ot as InternalModuleFormat, p as AsyncPluginHooks, pt as RolldownMagicString, q as PluginContext, qt as SourceMap, r as defineConfig, rt as RolldownDirectoryEntry, s as InputOption, st as NormalizedOutputOptions, t as ConfigExport, tt as ModuleTypeFilter, u as OptimizationOptions, ut as ChecksOptions, v as LoadResult, vt as WatchOptions, w as Plugin, wt as AdvancedChunksGroup, x as ObjectHook, xt as BuildOptions, y as ModuleOptions, yt as rolldown, z as OutputBundle } from "./shared/define-config-5HJ1b9vG.mjs";
-export { AddonFunction, AdvancedChunksGroup, AdvancedChunksOptions, AsyncPluginHooks, BufferEncoding, BuildOptions, BundleError, ChecksOptions, ChunkFileNamesFunction, ChunkingContext, CodeSplittingGroup, CodeSplittingNameFunction, CodeSplittingOptions, CommentsOptions, ConfigExport, CustomPluginOptions, DefineParallelPluginResult, EmittedAsset, EmittedChunk, EmittedFile, EmittedPrebuiltChunk, ExistingRawSourceMap, ExternalOption, ExternalOptionFunction, FunctionPluginHooks, GeneralHookFilter, GeneratedCodeOptions, GeneratedCodePreset, GetModuleInfo, GlobalsFunction, HookFilter, HookFilterExtension, ImportKind, InputOption, InputOptions, InternalModuleFormat, LoadResult, LogLevel, LogLevelOption, LogOrStringHandler, LoggingFunction, MinifyOptions, MinimalPluginContext, ModuleFormat, ModuleInfo, ModuleOptions, ModuleType, ModuleTypeFilter, ModuleTypes, NormalizedInputOptions, NormalizedOutputOptions, ObjectHook, OptimizationOptions, OutputAsset, OutputBundle, OutputChunk, OutputOptions, ParallelPluginHooks, PartialNull, PartialResolvedId, Plugin, PluginContext, PluginContextMeta, PluginContextResolveOptions, PreRenderedAsset, PreRenderedChunk, RUNTIME_MODULE_ID, RenderedChunk, RenderedModule, ResolveIdExtraOptions, ResolveIdResult, ResolvedId, RolldownBuild, RolldownDirectoryEntry, RolldownError, RolldownError as RollupError, RolldownFileStats, RolldownFsModule, RolldownLog, RolldownLog as RollupLog, RolldownLogWithString, RolldownLogWithString as RollupLogWithString, RolldownMagicString, RolldownOptions, RolldownOptionsFunction, RolldownOutput, RolldownPlugin, RolldownPluginOption, RolldownWatcher, RolldownWatcherEvent, RolldownWatcherWatcherEventMap, SourceDescription, SourceMap, SourceMapInput, SourcemapIgnoreListOption, TransformOptions, TransformPluginContext, TransformResult, TreeshakingOptions, VERSION, WarningHandlerWithDefault, WatchOptions, WatcherFileWatcherOptions, WatcherOptions, build, defineConfig, rolldown, watch };
+import { FSLike } from "fdir";
+
+//#region src/types.d.ts
+type FileSystemAdapter = Partial<FSLike>;
+interface GlobOptions {
+  /**
+  * Whether to return absolute paths. Disable to have relative paths.
+  * @default false
+  */
+  absolute?: boolean;
+  /**
+  * Enables support for brace expansion syntax, like `{a,b}` or `{1..9}`.
+  * @default true
+  */
+  braceExpansion?: boolean;
+  /**
+  * Whether to match in case-sensitive mode.
+  * @default true
+  */
+  caseSensitiveMatch?: boolean;
+  /**
+  * The working directory in which to search. Results will be returned relative to this directory, unless
+  * {@link absolute} is set.
+  *
+  * It is important to avoid globbing outside this directory when possible, even with absolute paths enabled,
+  * as doing so can harm performance due to having to recalculate relative paths.
+  * @default process.cwd()
+  */
+  cwd?: string | URL;
+  /**
+  * Logs useful debug information. Meant for development purposes. Logs can change at any time.
+  * @default false
+  */
+  debug?: boolean;
+  /**
+  * Maximum directory depth to crawl.
+  * @default Infinity
+  */
+  deep?: number;
+  /**
+  * Whether to return entries that start with a dot, like `.gitignore` or `.prettierrc`.
+  * @default false
+  */
+  dot?: boolean;
+  /**
+  * Whether to automatically expand directory patterns.
+  *
+  * Important to disable if migrating from [`fast-glob`](https://github.com/mrmlnc/fast-glob).
+  * @default true
+  */
+  expandDirectories?: boolean;
+  /**
+  * Enables support for extglobs, like `+(pattern)`.
+  * @default true
+  */
+  extglob?: boolean;
+  /**
+  * Whether to traverse and include symbolic links. Can slightly affect performance.
+  * @default true
+  */
+  followSymbolicLinks?: boolean;
+  /**
+  * An object that overrides `node:fs` functions.
+  * @default import('node:fs')
+  */
+  fs?: FileSystemAdapter;
+  /**
+  * Enables support for matching nested directories with globstars (`**`).
+  * If `false`, `**` behaves exactly like `*`.
+  * @default true
+  */
+  globstar?: boolean;
+  /**
+  * Glob patterns to exclude from the results.
+  * @default []
+  */
+  ignore?: string | readonly string[];
+  /**
+  * Enable to only return directories.
+  * If `true`, disables {@link onlyFiles}.
+  * @default false
+  */
+  onlyDirectories?: boolean;
+  /**
+  * Enable to only return files.
+  * @default true
+  */
+  onlyFiles?: boolean;
+  /**
+  * @deprecated Provide patterns as the first argument instead.
+  */
+  patterns?: string | readonly string[];
+  /**
+  * An `AbortSignal` to abort crawling the file system.
+  * @default undefined
+  */
+  signal?: AbortSignal;
+}
+//#endregion
+//#region src/utils.d.ts
+/**
+* Converts a path to a pattern depending on the platform.
+* Identical to {@link escapePath} on POSIX systems.
+* @see {@link https://superchupu.dev/tinyglobby/documentation#convertPathToPattern}
+*/
+declare const convertPathToPattern: (path: string) => string;
+/**
+* Escapes a path's special characters depending on the platform.
+* @see {@link https://superchupu.dev/tinyglobby/documentation#escapePath}
+*/
+declare const escapePath: (path: string) => string;
+/**
+* Checks if a pattern has dynamic parts.
+*
+* Has a few minor differences with [`fast-glob`](https://github.com/mrmlnc/fast-glob) for better accuracy:
+*
+* - Doesn't necessarily return `false` on patterns that include `\`.
+* - Returns `true` if the pattern includes parentheses, regardless of them representing one single pattern or not.
+* - Returns `true` for unfinished glob extensions i.e. `(h`, `+(h`.
+* - Returns `true` for unfinished brace expansions as long as they include `,` or `..`.
+*
+* @see {@link https://superchupu.dev/tinyglobby/documentation#isDynamicPattern}
+*/
+declare function isDynamicPattern(pattern: string, options?: {
+  caseSensitiveMatch: boolean;
+}): boolean;
+//#endregion
+//#region src/index.d.ts
+/**
+* Asynchronously match files following a glob pattern.
+* @see {@link https://superchupu.dev/tinyglobby/documentation#glob}
+*/
+declare function glob(patterns: string | readonly string[], options?: Omit<GlobOptions, "patterns">): Promise<string[]>;
+/**
+* @deprecated Provide patterns as the first argument instead.
+*/
+declare function glob(options: GlobOptions): Promise<string[]>;
+/**
+* Synchronously match files following a glob pattern.
+* @see {@link https://superchupu.dev/tinyglobby/documentation#globSync}
+*/
+declare function globSync(patterns: string | readonly string[], options?: Omit<GlobOptions, "patterns">): string[];
+/**
+* @deprecated Provide patterns as the first argument instead.
+*/
+declare function globSync(options: GlobOptions): string[];
+//#endregion
+export { type GlobOptions, convertPathToPattern, escapePath, glob, globSync, isDynamicPattern };

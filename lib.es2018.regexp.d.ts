@@ -14,7 +14,22 @@ and limitations under the License.
 ***************************************************************************** */
 
 
-/// <reference lib="es5" />
-/// <reference lib="dom" />
-/// <reference lib="webworker.importscripts" />
-/// <reference lib="scripthost" />
+interface RegExpMatchArray {
+    groups?: {
+        [key: string]: string;
+    };
+}
+
+interface RegExpExecArray {
+    groups?: {
+        [key: string]: string;
+    };
+}
+
+interface RegExp {
+    /**
+     * Returns a Boolean value indicating the state of the dotAll flag (s) used with a regular expression.
+     * Default is false. Read-only.
+     */
+    readonly dotAll: boolean;
+}
