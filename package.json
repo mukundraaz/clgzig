@@ -1,67 +1,58 @@
 {
-  "name": "@jridgewell/trace-mapping",
-  "version": "0.3.31",
-  "description": "Trace the original position through a source map",
-  "keywords": [
-    "source",
-    "map"
-  ],
-  "main": "dist/trace-mapping.umd.js",
-  "module": "dist/trace-mapping.mjs",
-  "types": "types/trace-mapping.d.cts",
-  "files": [
-    "dist",
-    "src",
-    "types"
-  ],
+  "name": "@tybys/wasm-util",
+  "version": "0.10.1",
+  "description": "WASI polyfill for browser and some wasm util",
+  "main": "./lib/cjs/index.js",
+  "module": "./dist/wasm-util.esm-bundler.js",
+  "types": "./dist/wasm-util.d.ts",
   "exports": {
-    ".": [
-      {
-        "import": {
-          "types": "./types/trace-mapping.d.mts",
-          "default": "./dist/trace-mapping.mjs"
-        },
-        "default": {
-          "types": "./types/trace-mapping.d.cts",
-          "default": "./dist/trace-mapping.umd.js"
-        }
-      },
-      "./dist/trace-mapping.umd.js"
-    ],
-    "./package.json": "./package.json"
+    ".": {
+      "module": "./dist/wasm-util.esm-bundler.js",
+      "import": "./lib/mjs/index.mjs",
+      "require": "./lib/cjs/index.js",
+      "types": "./dist/wasm-util.d.ts"
+    }
   },
   "scripts": {
-    "benchmark": "run-s build:code benchmark:*",
-    "benchmark:install": "cd benchmark && npm install",
-    "benchmark:only": "node --expose-gc benchmark/index.mjs",
-    "build": "run-s -n build:code build:types",
-    "build:code": "node ../../esbuild.mjs trace-mapping.ts",
-    "build:types": "run-s build:types:force build:types:emit build:types:mts",
-    "build:types:force": "rimraf tsconfig.build.tsbuildinfo",
-    "build:types:emit": "tsc --project tsconfig.build.json",
-    "build:types:mts": "node ../../mts-types.mjs",
-    "clean": "run-s -n clean:code clean:types",
-    "clean:code": "tsc --build --clean tsconfig.build.json",
-    "clean:types": "rimraf dist types",
-    "test": "run-s -n test:types test:only test:format",
-    "test:format": "prettier --check '{src,test}/**/*.ts'",
-    "test:only": "mocha",
-    "test:types": "eslint '{src,test}/**/*.ts'",
-    "lint": "run-s -n lint:types lint:format",
-    "lint:format": "npm run test:format -- --write",
-    "lint:types": "npm run test:types -- --fix",
-    "prepublishOnly": "npm run-s -n build test"
+    "build": "tsgo build",
+    "watch": "tsgo watch",
+    "test": "jest",
+    "lint": "eslint ./src/**/*.{ts,js} --fix",
+    "prepare": "npm run build"
   },
-  "homepage": "https://github.com/jridgewell/sourcemaps/tree/main/packages/trace-mapping",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "wasi",
+    "polyfill"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jridgewell/sourcemaps.git",
-    "directory": "packages/trace-mapping"
+    "url": "https://github.com/toyobayashi/wasm-util.git"
   },
-  "author": "Justin Ridgewell <justin@ridgewell.name>",
+  "author": "toyobayashi",
   "license": "MIT",
   "dependencies": {
-    "@jridgewell/resolve-uri": "^3.1.0",
-    "@jridgewell/sourcemap-codec": "^1.4.14"
+    "tslib": "^2.4.0"
+  },
+  "devDependencies": {
+    "@tybys/ts-transform-module-specifier": "^0.0.2",
+    "@tybys/ts-transform-pure-class": "^0.1.1",
+    "@tybys/tsgo": "^1.1.0",
+    "@types/node": "^14.14.31",
+    "@typescript-eslint/eslint-plugin": "^5.40.1",
+    "@typescript-eslint/parser": "^5.40.1",
+    "eslint": "^8.25.0",
+    "eslint-config-standard-with-typescript": "^23.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.3.0",
+    "eslint-plugin-promise": "^6.1.0",
+    "memfs-browser": "^3.4.13000",
+    "mocha": "^10.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "~4.8.3"
   }
 }
