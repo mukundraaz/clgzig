@@ -1,161 +1,243 @@
-# @vitejs/plugin-react [![npm](https://img.shields.io/npm/v/@vitejs/plugin-react.svg)](https://npmjs.com/package/@vitejs/plugin-react)
+# jiti
 
-The default Vite plugin for React projects.
+<!-- automd:badges color=F0DB4F bundlephobia -->
 
-- enable [Fast Refresh](https://www.npmjs.com/package/react-refresh) in development (requires react >= 16.9)
-- use the [automatic JSX runtime](https://legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html)
-- small installation size
+[![npm version](https://img.shields.io/npm/v/jiti?color=F0DB4F)](https://npmjs.com/package/jiti)
+[![npm downloads](https://img.shields.io/npm/dm/jiti?color=F0DB4F)](https://npmjs.com/package/jiti)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/jiti?color=F0DB4F)](https://bundlephobia.com/package/jiti)
+
+<!-- /automd -->
+
+> This is the active development branch. Check out [jiti/v1](https://github.com/unjs/jiti/tree/v1) for legacy v1 docs and code.
+
+## 🌟 Used in
+
+[Docusaurus](https://docusaurus.io/), [ESLint](https://github.com/eslint/eslint), [FormKit](https://formkit.com/), [Histoire](https://histoire.dev/), [Knip](https://knip.dev/), [Nitro](https://nitro.unjs.io/), [Nuxt](https://nuxt.com/), [PostCSS loader](https://github.com/webpack-contrib/postcss-loader), [Rsbuild](https://rsbuild.dev/), [Size Limit](https://github.com/ai/size-limit), [Slidev](https://sli.dev/), [Tailwindcss](https://tailwindcss.com/), [Tokenami](https://github.com/tokenami/tokenami), [UnoCSS](https://unocss.dev/), [WXT](https://wxt.dev/), [Winglang](https://www.winglang.io/), [Graphql code generator](https://the-guild.dev/graphql/codegen), [Lingui](https://lingui.dev/), [Scaffdog](https://scaff.dog/), [Storybook](https://storybook.js.org), [...UnJS ecosystem](https://unjs.io/), [...60M+ npm monthly downloads](https://npm.chart.dev/jiti), [...6M+ public repositories](https://github.com/unjs/jiti/network/dependents).
+
+## ✅ Features
+
+- Seamless TypeScript and ESM syntax support for Node.js
+- Seamless interoperability between ESM and CommonJS
+- Asynchronous API to replace `import()`
+- Synchronous API to replace `require()` (deprecated)
+- Super slim and zero dependency
+- Custom resolve aliases
+- Smart syntax detection to avoid extra transforms
+- Node.js native `require.cache` integration
+- Filesystem transpile with hard disk caches
+- ESM Loader support
+- JSX support (opt-in)
+
+> [!IMPORTANT]
+> To enhance compatibility, jiti `>=2.1` enabled [`interopDefault`](#interopdefault) using a new Proxy method. If you migrated to `2.0.0` earlier, this might have caused behavior changes. In case of any issues during the upgrade, please [report](https://github.com/unjs/jiti/issues) so we can investigate to solve them. 🙏🏼
+
+## 💡 Usage
+
+### CLI
+
+You can use `jiti` CLI to quickly run any script with TypeScript and native ESM support!
+
+```bash
+npx jiti ./index.ts
+```
+
+### Programmatic
+
+Initialize a jiti instance:
 
 ```js
-// vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+// ESM
+import { createJiti } from "jiti";
+const jiti = createJiti(import.meta.url);
 
-export default defineConfig({
-  plugins: [react()],
-})
+// CommonJS (deprecated)
+const { createJiti } = require("jiti");
+const jiti = createJiti(__filename);
 ```
 
-## Options
-
-### include
-
-Includes `.js`, `.jsx`, `.ts` & `.tsx` by default. This option can be used to add fast refresh to `.mdx` files:
+Import (async) and resolve with ESM compatibility:
 
 ```js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import mdx from '@mdx-js/rollup'
+// jiti.import(id) is similar to import(id)
+const mod = await jiti.import("./path/to/file.ts");
 
-export default defineConfig({
-  plugins: [
-    { enforce: 'pre', ...mdx() },
-    react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
-  ],
-})
+// jiti.esmResolve(id) is similar to import.meta.resolve(id)
+const resolvedPath = jiti.esmResolve("./src");
 ```
 
-### exclude
-
-The default value is `/node_modules/`. You may use it to exclude JSX/TSX files that runs in a worker or are not React files.
-Except if explicitly desired, you should keep `node_modules` in the exclude list:
+If you need the default export of module, you can use `jiti.import(id, { default: true })` as shortcut to `mod?.default ?? mod`.
 
 ```js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [
-    react({ exclude: [/\/pdf\//, /\.solid\.tsx$/, /\/node_modules\//] }),
-  ],
-})
+// shortcut to mod?.default ?? mod
+const modDefault = await jiti.import("./path/to/file.ts", { default: true });
 ```
 
-### jsxImportSource
-
-Control where the JSX factory is imported from. By default, this is inferred from `jsxImportSource` from corresponding a tsconfig file for a transformed file.
+CommonJS (sync & deprecated):
 
 ```js
-react({ jsxImportSource: '@emotion/react' })
+// jiti() is similar to require(id)
+const mod = jiti("./path/to/file.ts");
+
+// jiti.resolve() is similar to require.resolve(id)
+const resolvedPath = jiti.resolve("./src");
 ```
 
-### jsxRuntime
-
-By default, the plugin uses the [automatic JSX runtime](https://legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html). However, if you encounter any issues, you may opt out using the `jsxRuntime` option.
+You can also pass options as the second argument:
 
 ```js
-react({ jsxRuntime: 'classic' })
+const jiti = createJiti(import.meta.url, { debug: true });
 ```
 
-### reactRefreshHost
+### Register global ESM loader
 
-The `reactRefreshHost` option is only necessary in a module federation context. It enables HMR to work between a remote & host application. In your remote Vite config, you would add your host origin:
+You can globally register jiti using [global hooks](https://nodejs.org/api/module.html#initialize). (Important: Requires Node.js > 20)
 
 ```js
-react({ reactRefreshHost: 'http://localhost:3000' })
+import "jiti/register";
 ```
 
-Under the hood, this simply updates the React Fash Refresh runtime URL from `/@react-refresh` to `http://localhost:3000/@react-refresh` to ensure there is only one Refresh runtime across the whole application. Note that if you define `base` option in the host application, you need to include it in the option, like: `http://localhost:3000/{base}`.
+Or:
 
-## React Compiler
-
-[React Compiler](https://react.dev/learn/react-compiler) support is available via the exported `reactCompilerPreset` helper, which requires [`@rolldown/plugin-babel`](https://npmx.dev/package/@rolldown/plugin-babel) and [`babel-plugin-react-compiler`](https://npmx.dev/package/babel-plugin-react-compiler) as peer dependencies:
-
-```sh
-npm install -D @rolldown/plugin-babel babel-plugin-react-compiler
+```bash
+node --import jiti/register index.ts
 ```
 
-```js
-// vite.config.js
-import { defineConfig } from 'vite'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import babel from '@rolldown/plugin-babel'
+## 🎈 `jiti/native`
 
-export default defineConfig({
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
-})
-```
+You can alias `jiti` to `jiti/native` to directly depend on runtime's [`import.meta.resolve`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve) and dynamic [`import()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import) support. This allows easing up the ecosystem transition to runtime native support by giving the same API of jiti.
 
-The `reactCompilerPreset` accepts an optional options object with the following properties:
+## ⚙️ Options
 
-- `compilationMode` — Set to `'annotation'` to only compile components annotated with `"use memo"`.
-- `target` — Set to `'17'` or `'18'` to target older React versions (uses `react-compiler-runtime` instead of `react/compiler-runtime`).
+### `debug`
 
-```js
-babel({
-  presets: [reactCompilerPreset({ compilationMode: 'annotation' })],
-})
-```
+- Type: Boolean
+- Default: `false`
+- Environment variable: `JITI_DEBUG`
 
-> [!TIP]
->
-> `reactCompilerPreset` is only a convenient helper with a preconfigured filter. You can configure override the filters to fit your project structure or code. For example, if you know a large portion of your files are never React/hook-related or won't benefit from the React Compiler, you can aggressively exclude them via `rolldown.filter`:
->
-> ```js
-> const myPreset = reactCompilerPreset()
-> myPreset.rolldown.filter.id.exclude = ['src/legacy/**', 'src/utils/**']
->
-> babel({
->   presets: [myPreset],
-> })
-> ```
+Enable verbose logging. You can use `JITI_DEBUG=1 <your command>` to enable it.
 
-## `@vitejs/plugin-react/preamble`
+### `fsCache`
 
-The package provides `@vitejs/plugin-react/preamble` to initialize HMR runtime from client entrypoint for SSR applications which don't use [`transformIndexHtml` API](https://vite.dev/guide/api-javascript.html#vitedevserver). For example:
+- Type: Boolean | String
+- Default: `true`
+- Environment variable: `JITI_FS_CACHE`
 
-```js
-// [entry.client.js]
-import '@vitejs/plugin-react/preamble'
-```
+Filesystem source cache (enabled by default)
 
-Alternatively, you can manually call `transformIndexHtml` during SSR, which sets up equivalent initialization code. Here's an example for an Express server:
+By default (when is `true`), jiti uses `node_modules/.cache/jiti` (if exists) or `{TMP_DIR}/jiti`.
 
-```js
-app.get('/', async (req, res, next) => {
-  try {
-    let html = fs.readFileSync(path.resolve(root, 'index.html'), 'utf-8')
+**Note:** It is recommended that this option be enabled for better performance.
 
-    // Transform HTML using Vite plugins.
-    html = await viteServer.transformIndexHtml(req.url, html)
+### `rebuildFsCache`
 
-    res.send(html)
-  } catch (e) {
-    return next(e)
-  }
-})
-```
+- Type: Boolean
+- Default: `false`
+- Environment variable: `JITI_REBUILD_FS_CACHE`
 
-Otherwise, you'll get the following error:
+Rebuild filesystem source cache created by `fsCache`.
 
-```
-Uncaught Error: @vitejs/plugin-react can't detect preamble. Something is wrong.
-```
+### `moduleCache`
 
-## Consistent components exports
+- Type: String
+- Default: `true`
+- Environment variable: `JITI_MODULE_CACHE`
 
-For React refresh to work correctly, your file should only export React components. You can find a good explanation in the [Gatsby docs](https://www.gatsbyjs.com/docs/reference/local-development/fast-refresh/#how-it-works).
+Runtime module cache (enabled by default).
 
-If an incompatible change in exports is found, the module will be invalidated and HMR will propagate. To make it easier to export simple constants alongside your component, the module is only invalidated when their value changes.
+Disabling allows editing code and importing the same module multiple times.
 
-You can catch mistakes and get more detailed warnings with this [ESLint rule](https://github.com/ArnaudBarre/eslint-plugin-react-refresh), or the equivalent [Oxlint rule](https://oxc.rs/docs/guide/usage/linter/rules/react/only-export-components.html).
+When enabled, jiti integrates with Node.js native CommonJS cache-store.
+
+### `transform`
+
+- Type: Function
+- Default: Babel (lazy loaded)
+
+Transform function. See [src/babel](./src/babel.ts) for more details
+
+### `sourceMaps`
+
+- Type: Boolean
+- Default `false`
+- Environment variable: `JITI_SOURCE_MAPS`
+
+Add inline source map to transformed source for better debugging.
+
+### `interopDefault`
+
+- Type: Boolean
+- Default: `true`
+- Environment variable: `JITI_INTEROP_DEFAULT`
+
+Jiti combines module exports with the `default` export using an internal Proxy to improve compatibility with mixed CJS/ESM usage. You can check the current implementation [here](https://github.com/unjs/jiti/blob/main/src/utils.ts#L105).
+
+### `alias`
+
+- Type: Object
+- Default: -
+- Environment variable: `JITI_ALIAS`
+
+You can also pass an object to the environment variable for inline config. Example: `JITI_ALIAS='{"~/*": "./src/*"}' jiti ...`.
+
+Custom alias map used to resolve IDs.
+
+### `nativeModules`
+
+- Type: Array
+- Default: ['typescript']
+- Environment variable: `JITI_NATIVE_MODULES`
+
+List of modules (within `node_modules`) to always use native `require()` for them.
+
+### `transformModules`
+
+- Type: Array
+- Default: []
+- Environment variable: `JITI_TRANSFORM_MODULES`
+
+List of modules (within `node_modules`) to transform them regardless of syntax.
+
+### `importMeta`
+
+Parent module's [`import.meta`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta) context to use for ESM resolution. (only used for `jiti/native` import).
+
+### `tryNative`
+
+- Type: Boolean
+- Default: Enabled if bun is detected
+- Environment variable: `JITI_TRY_NATIVE`
+
+Try to use native require and import without jiti transformations first.
+
+### `jsx`
+
+- Type: Boolean | {options}
+- Default: `false`
+- Environment Variable: `JITI_JSX`
+
+Enable JSX support using [`@babel/plugin-transform-react-jsx`](https://babeljs.io/docs/babel-plugin-transform-react-jsx).
+
+See [`test/fixtures/jsx`](./test/fixtures/jsx) for framework integration examples.
+
+## Development
+
+- Clone this repository
+- Enable [Corepack](https://github.com/nodejs/corepack) using `corepack enable`
+- Install dependencies using `pnpm install`
+- Run `pnpm dev`
+- Run `pnpm jiti ./test/path/to/file.ts`
+
+## License
+
+<!-- automd:contributors license=MIT author="pi0" -->
+
+Published under the [MIT](https://github.com/unjs/jiti/blob/main/LICENSE) license.
+Made by [@pi0](https://github.com/pi0) and [community](https://github.com/unjs/jiti/graphs/contributors) 💛
+<br><br>
+<a href="https://github.com/unjs/jiti/graphs/contributors">
+<img src="https://contrib.rocks/image?repo=unjs/jiti" />
+</a>
+
+<!-- /automd -->
+
+<!-- automd:with-automd -->

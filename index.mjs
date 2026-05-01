@@ -1,9 +1,4 @@
-/**
- * @packageDocumentation
- */
-export * from "./asyncify.mjs";
-export * from "./load.mjs";
-export * from "./wasi/index.mjs";
-export * from "./memory.mjs";
-export * from "./jspi.mjs";
-export * from "./wasi/fs.mjs";
+import index from './index.js';
+
+const { transform, transformStyleAttribute, bundle, bundleAsync, browserslistToTargets, composeVisitors, Features } = index;
+export { transform, transformStyleAttribute, bundle, bundleAsync, browserslistToTargets, composeVisitors, Features };
