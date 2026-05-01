@@ -1,193 +1,161 @@
-# @tybys/wasm-util
+# @vitejs/plugin-react [![npm](https://img.shields.io/npm/v/@vitejs/plugin-react.svg)](https://npmjs.com/package/@vitejs/plugin-react)
 
-WebAssembly related utils for browser environment
+The default Vite plugin for React projects.
 
-**The output code is ES2019**
-
-## Features
-
-All example code below need to be bundled by ES module bundlers like `webpack` / `rollup`, or specify import map in browser native ES module runtime.
-
-### WASI polyfill for browser
-
-The API is similar to the `require('wasi').WASI` in Node.js.
-
-You can use `memfs-browser` to provide filesystem capability.
-
-- Example: [https://github.com/toyobayashi/wasi-wabt](https://github.com/toyobayashi/wasi-wabt)
-- Demo: [https://toyobayashi.github.io/wasi-wabt/](https://toyobayashi.github.io/wasi-wabt/)
+- enable [Fast Refresh](https://www.npmjs.com/package/react-refresh) in development (requires react >= 16.9)
+- use the [automatic JSX runtime](https://legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html)
+- small installation size
 
 ```js
-import { load, WASI } from '@tybys/wasm-util'
-import { Volume, createFsFromVolume } from 'memfs-browser'
+// vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-const fs = createFsFromVolume(Volume.fromJSON({
-  '/home/wasi': null
-}))
-
-const wasi = new WASI({
-  args: ['chrome', 'file.wasm'],
-  env: {
-    NODE_ENV: 'development',
-    WASI_SDK_PATH: '/opt/wasi-sdk'
-  },
-  preopens: {
-    '/': '/'
-  },
-  fs,
-
-  // redirect stdout / stderr
-
-  // print (text) { console.log(text) },
-  // printErr (text) { console.error(text) }
+export default defineConfig({
+  plugins: [react()],
 })
-
-const imports = {
-  wasi_snapshot_preview1: wasi.wasiImport
-}
-
-const { module, instance } = await load('/path/to/file.wasm', imports)
-wasi.start(instance)
-// wasi.initialize(instance)
 ```
 
-Implemented syscalls: [wasi_snapshot_preview1](#wasi_snapshot_preview1)
+## Options
 
-### `load` / `loadSync`
+### include
 
-`loadSync` has 4KB wasm size limit in browser.
+Includes `.js`, `.jsx`, `.ts` & `.tsx` by default. This option can be used to add fast refresh to `.mdx` files:
 
 ```js
-// bundler
-import { load, loadSync } from '@tybys/wasm-util'
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import mdx from '@mdx-js/rollup'
 
-const imports = { /* ... */ }
-
-// using path
-const { module, instance } = await load('/path/to/file.wasm', imports)
-const { module, instance } = loadSync('/path/to/file.wasm', imports)
-
-// using URL
-const { module, instance } = await load(new URL('./file.wasm', import.meta.url), imports)
-const { module, instance } = loadSync(new URL('./file.wasm', import.meta.url), imports)
-
-// using Uint8Array
-const buffer = new Uint8Array([
-  0x00, 0x61, 0x73, 0x6d,
-  0x01, 0x00, 0x00, 0x00
-])
-const { module, instance } = await load(buffer, imports)
-const { module, instance } = loadSync(buffer, imports)
-
-// auto asyncify
-const {
-  module,
-  instance: asyncifiedInstance
-} = await load(buffer, imports, { /* asyncify options */})
-asyncifiedInstance.exports.fn() // => return Promise
+export default defineConfig({
+  plugins: [
+    { enforce: 'pre', ...mdx() },
+    react({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
+  ],
+})
 ```
 
-### Extend Memory instance
+### exclude
+
+The default value is `/node_modules/`. You may use it to exclude JSX/TSX files that runs in a worker or are not React files.
+Except if explicitly desired, you should keep `node_modules` in the exclude list:
 
 ```js
-import { Memory, extendMemory } from '@tybys/wasm-util'
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-const memory = new WebAssembly.Memory({ initial: 256 })
-// const memory = instance.exports.memory
-
-extendMemory(memory)
-console.log(memory instanceof Memory)
-console.log(memory instanceof WebAssembly.Memory)
-// expose memory view getters like Emscripten
-const { HEAPU8, HEAPU32, view } = memory
+export default defineConfig({
+  plugins: [
+    react({ exclude: [/\/pdf\//, /\.solid\.tsx$/, /\/node_modules\//] }),
+  ],
+})
 ```
 
-### Asyncify wrap
+### jsxImportSource
 
-Build the C code using `clang`, `wasm-ld` and `wasm-opt`
+Control where the JSX factory is imported from. By default, this is inferred from `jsxImportSource` from corresponding a tsconfig file for a transformed file.
 
-```c
-void async_sleep(int ms);
+```js
+react({ jsxImportSource: '@emotion/react' })
+```
 
-int main() {
-  async_sleep(200);
-  return 0;
-}
+### jsxRuntime
+
+By default, the plugin uses the [automatic JSX runtime](https://legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html). However, if you encounter any issues, you may opt out using the `jsxRuntime` option.
+
+```js
+react({ jsxRuntime: 'classic' })
+```
+
+### reactRefreshHost
+
+The `reactRefreshHost` option is only necessary in a module federation context. It enables HMR to work between a remote & host application. In your remote Vite config, you would add your host origin:
+
+```js
+react({ reactRefreshHost: 'http://localhost:3000' })
+```
+
+Under the hood, this simply updates the React Fash Refresh runtime URL from `/@react-refresh` to `http://localhost:3000/@react-refresh` to ensure there is only one Refresh runtime across the whole application. Note that if you define `base` option in the host application, you need to include it in the option, like: `http://localhost:3000/{base}`.
+
+## React Compiler
+
+[React Compiler](https://react.dev/learn/react-compiler) support is available via the exported `reactCompilerPreset` helper, which requires [`@rolldown/plugin-babel`](https://npmx.dev/package/@rolldown/plugin-babel) and [`babel-plugin-react-compiler`](https://npmx.dev/package/babel-plugin-react-compiler) as peer dependencies:
+
+```sh
+npm install -D @rolldown/plugin-babel babel-plugin-react-compiler
 ```
 
 ```js
-import { Asyncify } from '@tybys/wasm-util'
+// vite.config.js
+import { defineConfig } from 'vite'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
 
-const asyncify = new Asyncify()
+export default defineConfig({
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
+})
+```
 
-const imports = {
-  env: {
-    async_sleep: asyncify.wrapImportFunction(function (ms) {
-      return new Promise((resolve) => {
-        setTimeout(resolve, ms)
-      })
-    })
+The `reactCompilerPreset` accepts an optional options object with the following properties:
+
+- `compilationMode` — Set to `'annotation'` to only compile components annotated with `"use memo"`.
+- `target` — Set to `'17'` or `'18'` to target older React versions (uses `react-compiler-runtime` instead of `react/compiler-runtime`).
+
+```js
+babel({
+  presets: [reactCompilerPreset({ compilationMode: 'annotation' })],
+})
+```
+
+> [!TIP]
+>
+> `reactCompilerPreset` is only a convenient helper with a preconfigured filter. You can configure override the filters to fit your project structure or code. For example, if you know a large portion of your files are never React/hook-related or won't benefit from the React Compiler, you can aggressively exclude them via `rolldown.filter`:
+>
+> ```js
+> const myPreset = reactCompilerPreset()
+> myPreset.rolldown.filter.id.exclude = ['src/legacy/**', 'src/utils/**']
+>
+> babel({
+>   presets: [myPreset],
+> })
+> ```
+
+## `@vitejs/plugin-react/preamble`
+
+The package provides `@vitejs/plugin-react/preamble` to initialize HMR runtime from client entrypoint for SSR applications which don't use [`transformIndexHtml` API](https://vite.dev/guide/api-javascript.html#vitedevserver). For example:
+
+```js
+// [entry.client.js]
+import '@vitejs/plugin-react/preamble'
+```
+
+Alternatively, you can manually call `transformIndexHtml` during SSR, which sets up equivalent initialization code. Here's an example for an Express server:
+
+```js
+app.get('/', async (req, res, next) => {
+  try {
+    let html = fs.readFileSync(path.resolve(root, 'index.html'), 'utf-8')
+
+    // Transform HTML using Vite plugins.
+    html = await viteServer.transformIndexHtml(req.url, html)
+
+    res.send(html)
+  } catch (e) {
+    return next(e)
   }
-}
-
-// async_sleep(200)
-const bytes = await (await fetch('/asyncfied_by_wasm-opt.wasm')).arrayBuffer()
-const { instance } = await WebAssembly.instantiate(bytes, imports)
-const asyncifiedInstance = asyncify.init(instance.exports.memory, instance, {
-  wrapExports: ['_start']
 })
-
-const p = asyncifedInstance._start()
-console.log(typeof p.then === 'function')
-const now = Date.now()
-await p
-console.log(Date.now() - now >= 200)
 ```
 
-### wasi_snapshot_preview1
+Otherwise, you'll get the following error:
 
-- [x] args_get
-- [x] args_sizes_get
-- [x] environ_get
-- [x] environ_sizes_get
-- [x] clock_res_get
-- [x] clock_time_get
-- [ ] ~~fd_advise~~
-- [x] fd_allocate
-- [x] fd_close
-- [x] fd_datasync
-- [x] fd_fdstat_get
-- [ ] ~~fd_fdstat_set_flags~~
-- [x] fd_fdstat_set_rights
-- [x] fd_filestat_get
-- [x] fd_filestat_set_size
-- [x] fd_filestat_set_times
-- [x] fd_pread
-- [x] fd_prestat_get
-- [x] fd_prestat_dir_name
-- [x] fd_pwrite
-- [x] fd_read
-- [x] fd_readdir
-- [x] fd_renumber
-- [x] fd_seek
-- [x] fd_sync
-- [x] fd_tell
-- [x] fd_write
-- [x] path_create_directory
-- [x] path_filestat_get
-- [x] path_filestat_set_times
-- [x] path_link
-- [x] path_open
-- [x] path_readlink
-- [x] path_remove_directory
-- [x] path_rename
-- [x] path_symlink
-- [x] path_unlink_file
-- [x] poll_oneoff (timer only)
-- [x] proc_exit
-- [ ] ~~proc_raise~~
-- [x] sched_yield
-- [x] random_get
-- [ ] ~~sock_recv~~
-- [ ] ~~sock_send~~
-- [ ] ~~sock_shutdown~~
+```
+Uncaught Error: @vitejs/plugin-react can't detect preamble. Something is wrong.
+```
+
+## Consistent components exports
+
+For React refresh to work correctly, your file should only export React components. You can find a good explanation in the [Gatsby docs](https://www.gatsbyjs.com/docs/reference/local-development/fast-refresh/#how-it-works).
+
+If an incompatible change in exports is found, the module will be invalidated and HMR will propagate. To make it easier to export simple constants alongside your component, the module is only invalidated when their value changes.
+
+You can catch mistakes and get more detailed warnings with this [ESLint rule](https://github.com/ArnaudBarre/eslint-plugin-react-refresh), or the equivalent [Oxlint rule](https://oxc.rs/docs/guide/usage/linter/rules/react/only-export-components.html).
